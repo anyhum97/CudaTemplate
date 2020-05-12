@@ -5,49 +5,129 @@
 
 #include "Reflection.cu"
 
-void __global__ CudaSample(float* buf)
+////////////////////////////////////////////////////////////////////////
+
+const unsigned int Width = 4;
+const unsigned int Height = 4;
+
+////////////////////////////////////////////////////////////////////////
+
+Reflection<float> Buffer;   // [3][Width][Height];
+
+////////////////////////////////////////////////////////////////////////
+
+__inline__ __device__ unsigned int GetBufferIndex(const unsigned int dim, int x, int y)
 {
-    /// <<<1, 128>>>
+    ////////////////////////////////////////////////////////////////////////
+
+    if(x < 0)
+	{
+		x = x % Width + Width;
+	}
+
+	if(x >= Width)
+	{
+		x = x % Width;
+	}
+
+    if(y < 0)
+	{
+		y = y % Height + Height;
+	}
+
+	if(y >= Height)
+	{
+		y = y % Height;
+	}
+
+    ////////////////////////////////////////////////////////////////////////
+
+    // [3][Width][Height];
+
+    return dim*Width*Height + x*Height + y;
+}
+
+////////////////////////////////////////////////////////////////////////
+
+void __global__ Daseffect(float* Buffer)
+{
+    /// <<<Width, Height>>>
 
     const unsigned int block = blockIdx.x;
     const unsigned int thread = threadIdx.x;
 
-    if(block > 0 || thread > 128)
+    if(block >= Width || thread >= Height)
     {
         return;
     }
 
-    buf[thread] += thread;
+    Buffer[GetBufferIndex(0, block, thread)] = 1.0f;
+    Buffer[GetBufferIndex(1, block, thread)] = 1.0f;
+    Buffer[GetBufferIndex(2, block, thread)] = 1.0f;
 }
 
-Reflection<float> buffer;
+////////////////////////////////////////////////////////////////////////
 
-float values[128] = { -0.9f, 2.2f, 3.5f };
+cudaEvent_t start;
+cudaEvent_t stop;
 
-void CudaInit()
+////////////////////////////////////////////////////////////////////////
+
+void CudaMalloc()
 {
     cudaSetDevice(0);
 
-    buffer = Malloc<float>(values, 128, true);
+    Buffer = Malloc<float>(3*Width*Height);
 }
 
 void CudaFree()
 {
-    Free(buffer);
+    Free(Buffer);
 }
 
-int main()
+////////////////////////////////////////////////////////////////////////
+
+void Test()
 {
-    CudaInit();
+    cudaEventCreate(&start);
+	cudaEventCreate(&stop);
+
+	cudaEventRecord(start, 0);
 
     ////////////////////////////////////////////////////////////////////////
 
-    CudaSample<<<1, 128>>>(Device(buffer));
+    Daseffect<<<Width, Height>>>(Device(Buffer));
 
-    Receive(buffer);
+    ////////////////////////////////////////////////////////////////////////
+
+    cudaEventRecord(stop, 0);
+	cudaEventSynchronize(stop);
+
+	float time = 0;
+
+	cudaEventElapsedTime(&time, start, stop);
+
+	cudaEventDestroy(start);
+	cudaEventDestroy(stop);
+
+    ////////////////////////////////////////////////////////////////////////
+
+    cout << time << "ms [OK]\n\n";
+
+    ////////////////////////////////////////////////////////////////////////
+}
+
+void main()
+{
+    CudaMalloc();
+
+    ////////////////////////////////////////////////////////////////////////
+
+    Test();
+    Receive(Buffer);
+    Show(Buffer);
 
     ////////////////////////////////////////////////////////////////////////
 
     CudaFree();
-    return 0;
 }

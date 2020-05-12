@@ -7,6 +7,10 @@
 
 ////////////////////////////////////////////////////////////////////////
 
+using namespace std;
+
+////////////////////////////////////////////////////////////////////////
+
 template <typename Type>
 
 struct Reflection
@@ -26,6 +30,11 @@ Reflection<Type> Malloc(const unsigned int count)
 	const unsigned int size = count * sizeof(Type);
 
 	Reflection<Type> reflection;
+
+	if(size == 0)
+	{
+		return reflection;
+	}
 
 	if(cudaMalloc(&reflection.device, size) != cudaSuccess)
 	{
@@ -58,6 +67,11 @@ Reflection<Type> Malloc(Type* hostBuffer, const unsigned int count, bool send = 
 	const unsigned int size = count * sizeof(Type);
 
 	Reflection<Type> reflection;
+
+	if(size == 0)
+	{
+		return reflection;
+	}
 
 	if(cudaMalloc(&reflection.device, size) != cudaSuccess)
 	{
@@ -152,7 +166,19 @@ bool Send(Reflection<Type>& reflection, const unsigned int count)
 		return false;
 	}
 
-	const unsigned int size = count * sizeof(Type);
+	if(count == 0)
+	{
+		return true;
+	}
+
+	unsigned int size = count * sizeof(Type);
+
+	if(size > reflection.size)
+	{
+		size = reflection.size;
+
+		throw "Invalid Argument Exeption";
+	}
 
 	return cudaMemcpy(reflection.device, reflection.host, size, cudaMemcpyHostToDevice) == cudaSuccess;
 }
@@ -182,7 +208,19 @@ bool Receive(Reflection<Type>& reflection, const unsigned int count)
 		return false;
 	}
 
-	const unsigned int size = count * sizeof(Type);
+	if(count == 0)
+	{
+		return true;
+	}
+
+	unsigned int size = count * sizeof(Type);
+
+	if(size > reflection.size)
+	{
+		size = reflection.size;
+
+		throw "Invalid Argument Exeption";
+	}
 
 	return cudaMemcpy(reflection.host, reflection.device, size, cudaMemcpyDeviceToHost) == cudaSuccess;
 }
@@ -207,8 +245,30 @@ Type* Device(Reflection<Type>& reflection)
 
 ////////////////////////////////////////////////////////////////////////
 
+template <typename Type>
 
+void Show(Reflection<Type>& reflection, unsigned int count = 0)
+{
+	if(!IsValid(reflection))
+	{
+		cout << "Invalid Instance\n\n";
+		return;
+	}
 
+	const unsigned int max_count = reflection.size / sizeof(Type);
+
+	if(count > max_count || count == 0)
+	{
+		count = max_count;
+	}
+
+	for(int i=0; i<count && i<1024; ++i)
+	{
+		std::cout << "[" << i << "]: " << reflection.host[i] << "\n";
+	}
+}
+
+////////////////////////////////////////////////////////////////////////
 
 
 
