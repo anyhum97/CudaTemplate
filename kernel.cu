@@ -44,7 +44,7 @@ int main()
 
     CudaSample<<<1, 128>>>(Device(buffer));
 
-    Receive(buffer);
+    Receive(buffer, 128);
 
     ////////////////////////////////////////////////////////////////////////
 

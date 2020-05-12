@@ -152,7 +152,19 @@ bool Send(Reflection<Type>& reflection, const unsigned int count)
 		return false;
 	}
 
-	const unsigned int size = count * sizeof(Type);
+	if(count == 0)
+	{
+		return true;
+	}
+
+	unsigned int size = count * sizeof(Type);
+
+	if(size > reflection.size)
+	{
+		size = reflection.size;
+
+		throw "Invalid Argument Exeption";
+	}
 
 	return cudaMemcpy(reflection.device, reflection.host, size, cudaMemcpyHostToDevice) == cudaSuccess;
 }
@@ -182,7 +194,19 @@ bool Receive(Reflection<Type>& reflection, const unsigned int count)
 		return false;
 	}
 
-	const unsigned int size = count * sizeof(Type);
+	if(count == 0)
+	{
+		return true;
+	}
+
+	unsigned int size = count * sizeof(Type);
+
+	if(size > reflection.size)
+	{
+		size = reflection.size;
+
+		throw "Invalid Argument Exeption";
+	}
 
 	return cudaMemcpy(reflection.host, reflection.device, size, cudaMemcpyDeviceToHost) == cudaSuccess;
 }
