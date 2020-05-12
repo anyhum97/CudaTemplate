@@ -9,6 +9,6 @@
 </p>
 
 <p>
-Note: data transfer between the processor and the GPU can take considerable time.
+Note: data transfer between CPU and GPU can take considerable time.
 </p>
 
