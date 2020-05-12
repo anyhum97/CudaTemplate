@@ -5,17 +5,32 @@
 
 #include "Reflection.cu"
 
+void __global__ CudaSample(float* buf)
+{
+    /// <<<1, 128>>>
+
+    const unsigned int block = blockIdx.x;
+    const unsigned int thread = threadIdx.x;
+
+    if(block > 0 || thread > 128)
+    {
+        return;
+    }
+
+    buf[thread] = thread;
+}
+
 int main()
 {
     cudaSetDevice(0);
 
-    Reflection<float> test1(128);
+    Reflection<float> buffer(128);
 
-    float* ptr = Host(test1);
+    CudaSample<<<1, 128>>>(Device(buffer));
 
-    test1.Receive();
+    buffer.Receive();
 
-    ptr = Host(test1);
+
 
     return 0;
 }

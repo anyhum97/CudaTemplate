@@ -119,6 +119,11 @@ public:
 		Clear();
 	}
 
+	unsigned int GetSize()
+	{
+		return Size;
+	}
+
 	bool Send()
 	{
 		if(IsValid())
@@ -137,11 +142,6 @@ public:
 		}
 
 		return false;
-	}
-
-	unsigned int GetSize()
-	{
-		return Size;
 	}
 };
 
