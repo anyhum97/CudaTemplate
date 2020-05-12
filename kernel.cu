@@ -7,28 +7,64 @@
 
 ////////////////////////////////////////////////////////////////////////
 
-Reflection<float> Buffer; // [3][Width][Height];
+const unsigned int Width = 4;
+const unsigned int Height = 4;
 
 ////////////////////////////////////////////////////////////////////////
 
-void __global__ CudaSample(float* buf)
+Reflection<float> Buffer;   // [3][Width][Height];
+
+////////////////////////////////////////////////////////////////////////
+
+__inline__ __device__ unsigned int GetBufferIndex(const unsigned int dim, int x, int y)
 {
-    /// <<<1, 128>>>
+    ////////////////////////////////////////////////////////////////////////
 
-    const unsigned int block = blockIdx.x;
-    const unsigned int thread = threadIdx.x;
+    if(x < 0)
+	{
+		x = x % Width + Width;
+	}
 
-    if(block > 0 || thread > 128)
-    {
-        return;
-    }
+	if(x >= Width)
+	{
+		x = x % Width;
+	}
 
-    buf[thread] += thread;
+    if(y < 0)
+	{
+		y = y % Height + Height;
+	}
+
+	if(y >= Height)
+	{
+		y = y % Height;
+	}
+
+    ////////////////////////////////////////////////////////////////////////
+
+    // [3][Width][Height];
+
+    return dim*Width*Height + x*Height + y;
 }
 
 ////////////////////////////////////////////////////////////////////////
 
-float*** CudaBuffer;
+void __global__ Daseffect(float* Buffer)
+{
+    /// <<<Width, 1>>>
+
+    const unsigned int block = blockIdx.x;
+    const unsigned int thread = threadIdx.x;
+
+    if(block >= Width || thread > 0)
+    {
+        return;
+    }
+
+    Buffer[GetBufferIndex(0, block, 0)] = 1.0f;
+}
+
+////////////////////////////////////////////////////////////////////////
 
 cudaEvent_t start;
 cudaEvent_t stop;
@@ -38,11 +74,13 @@ cudaEvent_t stop;
 void CudaMalloc()
 {
     cudaSetDevice(0);
+
+    Buffer = Malloc<float>(3*Width*Height);
 }
 
 void CudaFree()
 {
-
+    Free(Buffer);
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -55,6 +93,8 @@ void Test()
 	cudaEventRecord(start, 0);
 
     ////////////////////////////////////////////////////////////////////////
+
+    Daseffect<<<Width, 1>>>(Device(Buffer));
 
     ////////////////////////////////////////////////////////////////////////
 
@@ -81,10 +121,9 @@ void main()
 
     ////////////////////////////////////////////////////////////////////////
 
-    const unsigned int Width = 1024;
-    const unsigned int Height = 1024;
-
-    
+    Test();
+    Receive(Buffer);
+    Show(Buffer);
 
     ////////////////////////////////////////////////////////////////////////
 
