@@ -9,149 +9,174 @@
 
 template <typename Type>
 
-class Reflection
+struct Reflection
 {
-private:
-	
-	unsigned int Size = 0;
-
-	void Clear()
-	{
-		host = nullptr;
-		device = nullptr;
-		
-		Size = 0;
-	}
-
-public:
-
 	Type* host = nullptr;
 	Type* device = nullptr;
 
-	Reflection::Reflection()
-	{
-		Clear();
-	}
-
-	Reflection::Reflection(const unsigned int count)
-	{
-		const unsigned int size = count * sizeof(Type);
-
-		if(cudaMalloc(&device, size) != cudaSuccess)
-		{
-			Clear();
-			return;
-		}
-
-		if(cudaMemset(device, 0, size) != cudaSuccess)
-		{
-			cudaFree(device);
-			Clear();
-			return;
-		}
-
-		host = new Type[count];
-
-		memset(host, 0, size);
-
-		Size = size;
-	}
-
-	Reflection::Reflection(Type* buffer, const unsigned int count)
-	{
-		const unsigned int size = count * sizeof(Type);
-
-		if(cudaMalloc(&device, size) != cudaSuccess)
-		{
-			Clear();
-			return;
-		}
-
-		if(cudaMemset(device, 0, size) != cudaSuccess)
-		{
-			cudaFree(device);
-			Clear();
-			return;
-		}
-
-		host = new Type[count];
-
-		memcpy(host, buffer, size);
-
-		Size = size;
-	}
-
-	Reflection::~Reflection()
-	{
-		Free();
-	}
-
-	bool IsValid()
-	{
-		if(Size == 0)
-		{
-			return false;
-		}
-
-		if(device == nullptr || host == nullptr)
-		{
-			return false;
-		}
-
-		return true;
-	}
-
-	void Free()
-	{
-		if(Size)
-		{
-			if(host != nullptr)
-			{
-				delete []host;
-			}
-
-			if(device != nullptr)
-			{
-				cudaFree(device);
-			}
-		}
-
-		Clear();
-	}
-
-	unsigned int GetSize()
-	{
-		return Size;
-	}
-
-	bool Send()
-	{
-		if(IsValid())
-		{
-			return cudaMemcpy(device, host, Size, cudaMemcpyHostToDevice) == cudaSuccess;
-		}
-
-		return false;
-	}
-
-	bool Receive()
-	{
-		if(IsValid())
-		{
-			return cudaMemcpy(host, device, Size, cudaMemcpyDeviceToHost) == cudaSuccess;
-		}
-
-		return false;
-	}
+	unsigned int size = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////
 
 template <typename Type>
 
-Type* Device(Reflection<Type>& reflection)
+Reflection<Type> Malloc(const unsigned int count)
 {
-	return reflection.device;
+	const unsigned int size = count * sizeof(Type);
+
+	Reflection<Type> reflection;
+
+	if(cudaMalloc(&reflection.device, size) != cudaSuccess)
+	{
+		reflection.device = nullptr;
+		return reflection;
+	}
+
+	if(cudaMemset(reflection.device, 0, size) != cudaSuccess)
+	{
+		cudaFree(reflection.device);
+		reflection.device = nullptr;
+		return reflection;
+	}
+
+	reflection.host = new Type[count];
+
+	memset(reflection.host, 0, size);
+
+	reflection.size = size;
+
+	return reflection;
+}
+
+////////////////////////////////////////////////////////////////////////
+
+template <typename Type>
+
+Reflection<Type> Malloc(Type* hostBuffer, const unsigned int count)
+{
+	const unsigned int size = count * sizeof(Type);
+
+	Reflection<Type> reflection;
+
+	if(cudaMalloc(&reflection.device, size) != cudaSuccess)
+	{
+		reflection.device = nullptr;
+		return reflection;
+	}
+
+	if(cudaMemset(reflection.device, 0, size) != cudaSuccess)
+	{
+		cudaFree(reflection.device);
+		reflection.device = nullptr;
+		return reflection;
+	}
+
+	reflection.host = new Type[count];
+
+	memcpy(reflection.host, hostBuffer, size);
+
+	reflection.size = size;
+
+	return reflection;
+}
+
+////////////////////////////////////////////////////////////////////////
+
+template <typename Type>
+
+void Free(Reflection<Type>& reflection)
+{
+	if(reflection.size)
+	{
+		if(reflection.host != nullptr)
+		{
+			delete []reflection.host;
+			reflection.host = nullptr;
+		}
+
+		if(reflection.device != nullptr)
+		{
+			cudaFree(reflection.device);
+			reflection.device = nullptr;
+		}
+
+		reflection.size = 0;
+	}
+}
+
+////////////////////////////////////////////////////////////////////////
+
+template <typename Type>
+
+bool IsValid(Reflection<Type>& reflection)
+{
+	if(reflection.size == 0 || reflection.host == nullptr || reflection.device == nullptr)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+////////////////////////////////////////////////////////////////////////
+
+template <typename Type>
+
+bool Send(Reflection<Type>& reflection)
+{
+	if(!IsValid(reflection))
+	{
+		return false;
+	}
+
+	return cudaMemcpy(reflection.device, reflection.host, reflection.size, cudaMemcpyHostToDevice) == cudaSuccess;
+}
+
+////////////////////////////////////////////////////////////////////////
+
+template <typename Type>
+
+bool Send(Reflection<Type>& reflection, const unsigned int count)
+{
+	if(!IsValid(reflection))
+	{
+		return false;
+	}
+
+	const unsigned int size = count * sizeof(Type);
+
+	return cudaMemcpy(reflection.device, reflection.host, size, cudaMemcpyHostToDevice) == cudaSuccess;
+}
+
+////////////////////////////////////////////////////////////////////////
+
+template <typename Type>
+
+bool Receive(Reflection<Type>& reflection)
+{
+	if(!IsValid(reflection))
+	{
+		return false;
+	}
+
+	return cudaMemcpy(reflection.host, reflection.device, reflection.size, cudaMemcpyDeviceToHost) == cudaSuccess;
+}
+
+////////////////////////////////////////////////////////////////////////
+
+template <typename Type>
+
+bool Receive(Reflection<Type>& reflection, const unsigned int count)
+{
+	if(!IsValid(reflection))
+	{
+		return false;
+	}
+
+	const unsigned int size = count * sizeof(Type);
+
+	return cudaMemcpy(reflection.host, reflection.device, size, cudaMemcpyDeviceToHost) == cudaSuccess;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -164,6 +189,19 @@ Type* Host(Reflection<Type>& reflection)
 }
 
 ////////////////////////////////////////////////////////////////////////
+
+template <typename Type>
+
+Type* Device(Reflection<Type>& reflection)
+{
+	return reflection.device;
+}
+
+////////////////////////////////////////////////////////////////////////
+
+
+
+
 
 
 
