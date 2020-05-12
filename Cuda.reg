@@ -1,0 +1,14 @@
+Windows Registry Editor Version 5.00 
+
+; Allows CUDA to work more than 2 seconds in Windows.
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\GraphicsDrivers\DCI] 
+"Timeout"=dword:00000014 
+"TdrDdiDelay"=dword:00000014 
+"TdrDelay"=dword:00000014 
+"TdrLevel"=dword:00000000 
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\GraphicsDrivers] 
+"TdrDdiDelay"=dword:00000014 
+"TdrDelay"=dword:00000014 
+"TdrLevel"=dword:00000000
