@@ -51,17 +51,19 @@ __inline__ __device__ unsigned int GetBufferIndex(const unsigned int dim, int x,
 
 void __global__ Daseffect(float* Buffer)
 {
-    /// <<<Width, 1>>>
+    /// <<<Width, Height>>>
 
     const unsigned int block = blockIdx.x;
     const unsigned int thread = threadIdx.x;
 
-    if(block >= Width || thread > 0)
+    if(block >= Width || thread >= Height)
     {
         return;
     }
 
-    Buffer[GetBufferIndex(0, block, 0)] = 1.0f;
+    Buffer[GetBufferIndex(0, block, thread)] = 1.0f;
+    Buffer[GetBufferIndex(1, block, thread)] = 1.0f;
+    Buffer[GetBufferIndex(2, block, thread)] = 1.0f;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -94,7 +96,7 @@ void Test()
 
     ////////////////////////////////////////////////////////////////////////
 
-    Daseffect<<<Width, 1>>>(Device(Buffer));
+    Daseffect<<<Width, Height>>>(Device(Buffer));
 
     ////////////////////////////////////////////////////////////////////////
 
