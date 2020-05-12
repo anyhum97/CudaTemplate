@@ -53,7 +53,7 @@ Reflection<Type> Malloc(const unsigned int count)
 
 template <typename Type>
 
-Reflection<Type> Malloc(Type* hostBuffer, const unsigned int count)
+Reflection<Type> Malloc(Type* hostBuffer, const unsigned int count, bool send = false)
 {
 	const unsigned int size = count * sizeof(Type);
 
@@ -65,11 +65,14 @@ Reflection<Type> Malloc(Type* hostBuffer, const unsigned int count)
 		return reflection;
 	}
 
-	if(cudaMemset(reflection.device, 0, size) != cudaSuccess)
+	if(!send)
 	{
-		cudaFree(reflection.device);
-		reflection.device = nullptr;
-		return reflection;
+		if(cudaMemset(reflection.device, 0, size) != cudaSuccess)
+		{
+			cudaFree(reflection.device);
+			reflection.device = nullptr;
+			return reflection;
+		}
 	}
 
 	reflection.host = new Type[count];
@@ -77,6 +80,11 @@ Reflection<Type> Malloc(Type* hostBuffer, const unsigned int count)
 	memcpy(reflection.host, hostBuffer, size);
 
 	reflection.size = size;
+
+	if(send)
+	{
+		Send(reflection);
+	}
 
 	return reflection;
 }

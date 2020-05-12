@@ -22,14 +22,13 @@ void __global__ CudaSample(float* buf)
 
 Reflection<float> buffer;
 
-float values[128] = { 1.0f, 2.2f, 3.5f };
+float values[128] = { -0.9f, 2.2f, 3.5f };
 
 void CudaInit()
 {
     cudaSetDevice(0);
 
-    buffer = Malloc<float>(values, 128);
-    Send(buffer);
+    buffer = Malloc<float>(values, 128, true);
 }
 
 void CudaFree()
@@ -41,9 +40,13 @@ int main()
 {
     CudaInit();
 
+    ////////////////////////////////////////////////////////////////////////
+
     CudaSample<<<1, 128>>>(Device(buffer));
 
     Receive(buffer);
+
+    ////////////////////////////////////////////////////////////////////////
 
     CudaFree();
     return 0;
