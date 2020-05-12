@@ -5,6 +5,12 @@
 
 #include "Reflection.cu"
 
+////////////////////////////////////////////////////////////////////////
+
+Reflection<float> Buffer; // [3][Width][Height];
+
+////////////////////////////////////////////////////////////////////////
+
 void __global__ CudaSample(float* buf)
 {
     /// <<<1, 128>>>
@@ -20,36 +26,67 @@ void __global__ CudaSample(float* buf)
     buf[thread] += thread;
 }
 
-Reflection<float> buffer;
+////////////////////////////////////////////////////////////////////////
 
-float values[128] = { -0.9f, 2.2f, 3.5f };
+float*** CudaBuffer;
 
-void CudaInit()
+cudaEvent_t start;
+cudaEvent_t stop;
+
+////////////////////////////////////////////////////////////////////////
+
+void CudaMalloc()
 {
     cudaSetDevice(0);
-
-    buffer = Malloc<float>(values, 128, true);
 }
 
 void CudaFree()
 {
-    Free(buffer);
+
 }
 
-int main()
+////////////////////////////////////////////////////////////////////////
+
+void Test()
 {
-    CudaInit();
+    cudaEventCreate(&start);
+	cudaEventCreate(&stop);
+
+	cudaEventRecord(start, 0);
 
     ////////////////////////////////////////////////////////////////////////
 
-    CudaSample<<<1, 128>>>(Device(buffer));
+    ////////////////////////////////////////////////////////////////////////
 
-    Receive(buffer, 128);
+    cudaEventRecord(stop, 0);
+	cudaEventSynchronize(stop);
 
-    Show(buffer);
+	float time = 0;
+
+	cudaEventElapsedTime(&time, start, stop);
+
+	cudaEventDestroy(start);
+	cudaEventDestroy(stop);
+
+    ////////////////////////////////////////////////////////////////////////
+
+    cout << time << "ms [OK]\n\n";
+
+    ////////////////////////////////////////////////////////////////////////
+}
+
+void main()
+{
+    CudaMalloc();
+
+    ////////////////////////////////////////////////////////////////////////
+
+    const unsigned int Width = 1024;
+    const unsigned int Height = 1024;
+
+    
 
     ////////////////////////////////////////////////////////////////////////
 
     CudaFree();
-    return 0;
 }

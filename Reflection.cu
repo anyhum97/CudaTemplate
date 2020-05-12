@@ -7,6 +7,10 @@
 
 ////////////////////////////////////////////////////////////////////////
 
+using namespace std;
+
+////////////////////////////////////////////////////////////////////////
+
 template <typename Type>
 
 struct Reflection
@@ -258,7 +262,7 @@ void Show(Reflection<Type>& reflection, unsigned int count = 0)
 		count = max_count;
 	}
 
-	for(int i=0; i<count; ++i)
+	for(int i=0; i<count && i<1024; ++i)
 	{
 		std::cout << "[" << i << "]: " << reflection.host[i] << "\n";
 	}
