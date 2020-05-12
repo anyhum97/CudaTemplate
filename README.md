@@ -9,6 +9,8 @@
 </p>
 
 <p>
-Note: data transfer between CPU and GPU can take considerable time.
+Note: data transfer between CPU and GPU can take considerable time.<br>
+To Build this project download CUDA Toolkit from:<br>
+https://developer.nvidia.com/cuda-toolkit
 </p>
 
