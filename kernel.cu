@@ -7,9 +7,15 @@
 
 int main()
 {
-    Reflection<float> test = Malloc<float>(128);
+    cudaSetDevice(0);
 
+    Reflection<float> test1(128);
 
+    float* ptr = Host(test1);
+
+    test1.Receive();
+
+    ptr = Host(test1);
 
     return 0;
 }
