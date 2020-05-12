@@ -17,7 +17,7 @@ void __global__ CudaSample(float* buf)
         return;
     }
 
-    buf[thread] = thread;
+    buf[thread] =  buf[thread]*2.0f;
 }
 
 int main()
@@ -26,11 +26,16 @@ int main()
 
     Reflection<float> buffer(128);
 
+    for(int i=0; i<128; ++i)
+    {
+        buffer.host[i] = i+1;
+    }
+
+    buffer.Send();
+
     CudaSample<<<1, 128>>>(Device(buffer));
 
     buffer.Receive();
-
-
 
     return 0;
 }
