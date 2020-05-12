@@ -27,6 +27,11 @@ Reflection<Type> Malloc(const unsigned int count)
 
 	Reflection<Type> reflection;
 
+	if(size == 0)
+	{
+		return reflection;
+	}
+
 	if(cudaMalloc(&reflection.device, size) != cudaSuccess)
 	{
 		reflection.device = nullptr;
@@ -58,6 +63,11 @@ Reflection<Type> Malloc(Type* hostBuffer, const unsigned int count, bool send = 
 	const unsigned int size = count * sizeof(Type);
 
 	Reflection<Type> reflection;
+
+	if(size == 0)
+	{
+		return reflection;
+	}
 
 	if(cudaMalloc(&reflection.device, size) != cudaSuccess)
 	{
@@ -231,8 +241,24 @@ Type* Device(Reflection<Type>& reflection)
 
 ////////////////////////////////////////////////////////////////////////
 
+template <typename Type>
 
+void Show(Reflection<Type>& reflection, unsigned int count = 0)
+{
+	const unsigned int max_count = reflection.size / sizeof(Type);
 
+	if(count > max_count || count == 0)
+	{
+		count = max_count;
+	}
+
+	for(int i=0; i<count; ++i)
+	{
+		std::cout << "[" << i << "]: " << reflection.host[i] << "\n";
+	}
+}
+
+////////////////////////////////////////////////////////////////////////
 
 
 
