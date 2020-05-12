@@ -245,6 +245,12 @@ template <typename Type>
 
 void Show(Reflection<Type>& reflection, unsigned int count = 0)
 {
+	if(!IsValid(reflection))
+	{
+		cout << "Invalid Instance\n\n";
+		return;
+	}
+
 	const unsigned int max_count = reflection.size / sizeof(Type);
 
 	if(count > max_count || count == 0)
