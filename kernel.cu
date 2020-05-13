@@ -18,38 +18,14 @@ Reflection<float> Buffer;   // [3][Width][Height];
 
 __inline__ __device__ unsigned int GetBufferIndex(const unsigned int dim, int x, int y)
 {
-    ////////////////////////////////////////////////////////////////////////
-
-    if(x < 0)
-	{
-		x = x % Width + Width;
-	}
-
-	if(x >= Width)
-	{
-		x = x % Width;
-	}
-
-    if(y < 0)
-	{
-		y = y % Height + Height;
-	}
-
-	if(y >= Height)
-	{
-		y = y % Height;
-	}
-
-    ////////////////////////////////////////////////////////////////////////
-
-    // [3][Width][Height];
+    // Buffer[3][Width][Height];
 
     return dim*Width*Height + x*Height + y;
 }
 
 ////////////////////////////////////////////////////////////////////////
 
-void __global__ Daseffect(float* Buffer)
+void __global__ BufferAccess(float* Buffer)
 {
     /// <<<Width, Height>>>
 
@@ -62,8 +38,8 @@ void __global__ Daseffect(float* Buffer)
     }
 
     Buffer[GetBufferIndex(0, block, thread)] = 1.0f;
-    Buffer[GetBufferIndex(1, block, thread)] = 1.0f;
-    Buffer[GetBufferIndex(2, block, thread)] = 1.0f;
+    Buffer[GetBufferIndex(1, block, thread)] = 2.0f;
+    Buffer[GetBufferIndex(2, block, thread)] = 3.0f;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -96,7 +72,7 @@ void Test()
 
     ////////////////////////////////////////////////////////////////////////
 
-    Daseffect<<<Width, Height>>>(Device(Buffer));
+    BufferAccess<<<Width, Height>>>(Device(Buffer));
 
     ////////////////////////////////////////////////////////////////////////
 
